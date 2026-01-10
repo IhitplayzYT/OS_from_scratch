@@ -1,7 +1,7 @@
 /* Disk.c */
 
 #include "disk.h"
-#include "fs.h"
+#include "fs4disk.h"
 
 internal i8 attached;
 public Disk *DiskDescriptor[MAX_DD];
@@ -25,11 +25,11 @@ internal i8 *numppend(i8 *a, i8 n) {
     return 0;
   static char buff[256];
   zero(buff, 255);
-  strcopy(buff, a);
+  strcopy((i8 * )buff, (i8 *)a);
   int l = len(a);
   buff[l] = 0x30 + n;
   buff[l + 1] = '\0';
-  return buff;
+  return (i8 *)buff;
 }
 
 public void disk_info(Disk *dd) {
@@ -38,7 +38,7 @@ public void disk_info(Disk *dd) {
   printf("------(Disk %d)------\nAttached ? %s\nPath : %s\nFD -> %d\nBlock "
          "Size(Bytes) = %d\n--------------------\n",
          dd->drive_no, attached & dd->drive_no ? "True" : "False",
-         numppend(Basepath, dd->drive_no), dd->fd, dd->blocks);
+         numppend((i8 *)Basepath, dd->drive_no), dd->fd, dd->blocks);
 }
 
 internal Disk *attach(i8 d_no) {
@@ -53,8 +53,8 @@ internal Disk *attach(i8 d_no) {
     dealloc(dd);
     return (Disk *)0;
   }
-  i8 *path = numppend(Basepath, d_no);
-  int fd = open(path, O_RDWR);
+  i8 *path = numppend((i8 * )Basepath, d_no);
+  int fd = open((char *)path, O_RDWR);
   if (fd < 3) {
     close(dd->fd);
     dealloc(dd);

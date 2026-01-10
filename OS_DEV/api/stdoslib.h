@@ -1,6 +1,5 @@
 /* stdoslib.h */
 #pragma once
-#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -320,27 +319,17 @@ DEFINE_MAX_ARR_S(i8, max_i8sa);
 DEFINE_MAX_ARR_S(s8, max_s8sa);
 DEFINE_MAX_ARR_S(char, max_csa);
 
-DEFINE_MIN(i8, min_i8);
-DEFINE_MIN(i16, min_i16);
 DEFINE_MIN(i32, min_i32);
 DEFINE_MIN(i64, min_i64);
-DEFINE_MIN(s8, min_s8);
-DEFINE_MIN(s16, min_s16);
 DEFINE_MIN(s32, min_s32);
 DEFINE_MIN(s64, min_s64);
-DEFINE_MIN(f32, min_f);
 DEFINE_MIN(f64, min_d);
 DEFINE_MIN_STR(i8, min_i8s);
 DEFINE_MIN_STR(s8, min_s8s);
-DEFINE_MAX(i8, max_i8);
-DEFINE_MAX(i16, max_i16);
 DEFINE_MAX(i32, max_i32);
 DEFINE_MAX(i64, max_i64);
-DEFINE_MAX(s8, max_s8);
-DEFINE_MAX(s16, max_s16);
 DEFINE_MAX(s32, max_s32);
 DEFINE_MAX(s64, max_s64);
-DEFINE_MAX(f32, max_f);
 DEFINE_MAX(f64, max_d);
 DEFINE_MAX_STR(i8, max_i8s);
 DEFINE_MAX_STR(s8, max_s8s);
@@ -362,7 +351,7 @@ DEFINE_MAX_STR(s8, max_s8s);
     va_start(args, a);                                                         \
     TYPE c = a;                                                                \
     printf(fmt, c);                                                            \
-    while (c = va_arg(args, TYPE))                                             \
+    while ((c = va_arg(args, TYPE)))                                             \
       printf(fmt, c);                                                          \
     printf("\n");                                                              \
     va_end(args);                                                              \
@@ -383,16 +372,8 @@ DEF_PRINT_ARR(char *, print_crsa, "%c ");
 DEF_PRINT_ARR(i8 **, print_i8sa, "%s ");
 DEF_PRINT_ARR(s8 **, print_s8sa, "%s ");
 
-DEF_PRINT_ARGS(i8, print_i8, "%c ");
-DEF_PRINT_ARGS(i16, print_i16, "%hu ");
-DEF_PRINT_ARGS(i32, print_i32, "%u ");
 DEF_PRINT_ARGS(i64, print_i64, "%lu ");
-DEF_PRINT_ARGS(s8, print_s8, "%c ");
-DEF_PRINT_ARGS(char, print_chars, "%c ");
-DEF_PRINT_ARGS(s16, print_s16, "%hd ");
-DEF_PRINT_ARGS(s32, print_s32, "%d ");
 DEF_PRINT_ARGS(s64, print_s64, "%ld ");
-DEF_PRINT_ARGS(f32, print_f32, "%f ");
 DEF_PRINT_ARGS(f64, print_f64, "%lf ");
 
 #define printarr(x, ...)                                                       \

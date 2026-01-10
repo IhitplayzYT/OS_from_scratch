@@ -9,6 +9,11 @@
 #include <unistd.h>
 /*Includes*/
 
+#ifndef DISK
+#define DISK
+
+#endif
+
 /* Typedefinations */
 typedef unsigned char i8;
 typedef unsigned short i16;
@@ -38,7 +43,7 @@ typedef unsigned long i64;
 /* MACROS */
 
 /* Structs */
-internal packed struct s_disk{
+struct internal packed s_disk{
 i32 fd;
 i16 blocks;
 i8 drive_no:2;
@@ -46,24 +51,7 @@ i8 drive_no:2;
 typedef struct s_disk Disk;
 typedef i8 Block[512];
 typedef i8 Bootsector[500];
-internal struct s_sb{
-    Bootsector boot;
-    i16 _;
-    i16 blocks; 
-    i16 inodes;
-    i16 inodeblocks;
-    i16 magic[2];
-}packed;
 
-typedef struct s_sb Suprblk;
-
-/* FileSystem */
-internal struct s_fs{
-    i8 drive;
-    Disk * dd;
-    i8 * bitmap;
-    Suprblk metadata;
-}packed;
 
 typedef struct s_fs Filesystem;
 /* Structs */

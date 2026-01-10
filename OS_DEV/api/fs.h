@@ -37,7 +37,7 @@ typedef unsigned long i64;
 /* Definations */
 typedef i16 ptr;
 typedef i8 Bootsector[500];
-internal packed enum e_type {
+enum internal packed e_type {
   InvalidType = 0x00,
   FileType = 0x01,
   DirType = 0x03
@@ -47,7 +47,7 @@ typedef enum e_type Type;
 typedef i8 Bitmap;
 
 /* Superblock 512B */
-internal struct s_sb {
+struct internal s_sb {
   Bootsector boot; // 500 bytes bootsector code         = 500 bytes
   i16 _;           // Reserved 2 bytes 0x00             = 2 bytes
   i16 blocks;      // No of Blocks                      = 2 bytes
@@ -59,7 +59,7 @@ internal struct s_sb {
 typedef struct s_sb Suprblk;
 
 /* FileSystem */
-internal struct s_fs {
+struct internal s_fs {
   i8 drive;         // Drive no  (Option TODO: DD can provide driveno)
   Disk *dd;         // Disk descriptor onto which fs mounted
   i8 *bitmap;       // Bitmap to check active and available inodes
@@ -68,14 +68,14 @@ internal struct s_fs {
 
 typedef struct s_fs Filesystem;
 
-internal struct fname { // Support for extentions of max 3 chars
+struct internal fname { // Support for extentions of max 3 chars
   i8 name[8];
   i8 ext[3];
 } packed;
 typedef struct fname Filename;
 
 /* Inode 32B */
-internal struct s_inode {
+struct internal s_inode {
   i8 validtype;                   // Inode Type (Valid/File/Dir)  = 1 byte
   i16 size;                       // Size of file pointed by inode = 2 bytes
   Filename name;                  // 11 byte filename
@@ -85,7 +85,7 @@ internal struct s_inode {
 typedef struct s_inode Inode;
 
 /* FSBLOCK(Block pointed to by indirect ptr) */
-internal union u_block {
+union internal u_block {
   Suprblk super;
   i8 data[BLOCK_SIZE];
   ptr ptrs[PtrsperBlock];
@@ -93,13 +93,13 @@ internal union u_block {
 } packed;
 typedef union u_block FSblock;
 
-internal struct s_file_info {
+struct internal s_file_info {
   i16 size;
   ptr idx;
 } packed;
 typedef struct s_file_info File_stat;
 
-internal struct s_path {
+struct internal s_path {
   Filesystem *fs;
   Filename *target;
   struct s_Tok_ret *inter;
@@ -145,8 +145,6 @@ extern public Filesystem *FileDescriptors[MAX_FS];
 
 /* Function Signatures */
 int main(int, char **);
-internal Filesystem *fsformat(Disk *, Bootsector *,
-                              i8); // To format and mount fs onto a disk
 internal Bitmap *mkbitmap(Filesystem *, i8);           // To generate bitmap
 internal i16 allocbitmap(Filesystem *, Bitmap *);      // Alloc bitmap
 internal void freebitmap(Filesystem *, Bitmap *, i16); // Free bitmap

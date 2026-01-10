@@ -1,8 +1,6 @@
 /*  fs.h  */
+#include "fs4disk.h"
 #include "fs.h"
-#include "disk.h"
-#include "os.h"
-#include "stdoslib.h"
 public Filesystem *FileDescriptors[MAX_FS];
 
 internal Bitmap *mkbitmap(Filesystem *fs, i8 scan) {
@@ -52,7 +50,7 @@ internal void print_inodes(Filesystem *fs) {
     Inode *inode = fetchinode(fs, i);
     if (inode && inode->validtype & 0x01) {
       printf("----Inode---- %d:\nPath: %s\nSize: %d\nInode Type: %s\n", (i + 1),
-             concat("/", filestr(&inode->name)), inode->size,
+             concat((i8 * )"/", filestr(&inode->name)), inode->size,
              (inode->validtype == FileType)  ? "File"
              : (inode->validtype == DirType) ? "Directory"
                                              : "????");
@@ -94,7 +92,7 @@ internal void fsshow(Filesystem *fs) {
          (fs->drive == 1)   ? 'C'
          : (fs->drive == 2) ? 'D'
                             : '?',
-         numppend(Basepath, fs->drive), fs->dd->blocks, fs->metadata.magic[0],
+         numppend((i8 *)Basepath, fs->drive), fs->dd->blocks, fs->metadata.magic[0],
          fs->metadata.magic[1], fs->metadata.blocks, fs->metadata.inodes,
          fs->metadata.inodeblocks);
 }
@@ -197,7 +195,7 @@ internal Filesystem *fsformat(Disk *dd, Bootsector *mbr, i8 force) {
   for (int i = 0; i < size; i++)
     setbit((i8 *)bm, i);
   fs->bitmap = bm;
-  ptr o = create_inode(fs, parse_name("/"), DirType);
+  ptr o = create_inode(fs, parse_name((i8 *)"/"), DirType);
   return fs;
 }
 
@@ -302,7 +300,6 @@ internal Filesystem *fsmount(i8 drive) {
           : (drive == 2) ? 'D'
                          : '?');
   FileDescriptors[drive - 1] = fs;
-  show(fs, "filesystem");
   return fs;
 }
 
@@ -388,7 +385,7 @@ internal ptr inode_alloc(Filesystem *fs) {
     seterr(MEM_ERR);
     return 0;
   }
-  zero(p, sizeof(p));
+  zero(p, sizeof(Inode *));
   i16 t = Inodesperblock * fs->metadata.inodeblocks;
   for (n = 0; n < t; n++) {
     p = fetchinode(fs, n);
@@ -673,7 +670,7 @@ internal void filename_show(Filename *fn) {
 }
 
 internal i8 validchar(i8 c) {
-  i8 *p = VALID_VOCAB;
+  i8 *p = (i8 *)VALID_VOCAB;
   for (; *p; p++) {
     if (*p == c)
       return 1;
@@ -775,7 +772,6 @@ internal Dir *open_dir(i8 *str) {
 
    //  -- ERROR HERE  :TODO FIX:   path->fs is null ?? 
   Inode *ino = fetchinode(path->fs, 0);
-  show(path->fs,"filesystem");
   if (!ino) {
     dealloc(path);
     seterr(INODE_ERR);

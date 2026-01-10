@@ -18,7 +18,7 @@ disk.o: disk.c disk.h
 stdoslib.o: stdoslib.c stdoslib.h
 	gcc $(flags) $(CFLAGS) -fPIC -c $<
 
-fs.o: fs.c fs.h
+fs.o: fs.c fs4disk.h fs.h
 	gcc $(flags) $(CFLAGS) -fPIC -c $<
 
 util.o : util.c

@@ -1,4 +1,5 @@
 #include "disk.h"
+#include "fs4disk.h"
 #include "fs.h"
 #include "os.h"
 #include "stdoslib.h"
@@ -9,7 +10,7 @@ typedef unsigned char i8;
 typedef unsigned short i16;
 
 void usage_format(i8 *str) {
-  fprintf(stderr, "Usage: %s format [-s] <drive>\n", str, str);
+  fprintf(stderr, "Usage: %s format [-s] <drive>\n", str);
   exit(-1);
 }
 
@@ -21,7 +22,7 @@ void usage(i8 *str) {
 void cmd_format(i8 *s1, i8 *s2) {
   i8 drive, *drivestr, bootable;
   if (!s1)
-    usage_format("diskutil");
+    usage_format((i8 *)"diskutil");
   else if (!s2) {
     bootable = 0;
     drivestr = s1;
@@ -30,14 +31,14 @@ void cmd_format(i8 *s1, i8 *s2) {
       bootable = 1;
       drivestr = s2;
     } else
-      usage_format("diskutil");
+      usage_format((i8 *)"diskutil");
   }
 
   drive = (drivestr[0] == 'c' || drivestr[0] == 'C')   ? 1
           : (drivestr[0] == 'd' || drivestr[0] == 'D') ? 2
-                                                       : -1;
-  if (drive == -1)
-    usage_format("diskutil");
+                                                       : 2;
+  if (drive == 3)
+    usage_format((i8 *)"diskutil");
   if (bootable) {
     fprintf(stderr, "Boot not supported\n");
     exit(-1);
@@ -65,20 +66,19 @@ void cmd_format(i8 *s1, i8 *s2) {
     exit(-1);
   }
   printf("Disk Formatted!\n");
-  show(fs, "filesystem");
-  ptr idx1 = create_inode(fs, parse_name("hello.bat"), FileType);
-  ptr idx2 = create_inode(fs, parse_name("helog"), DirType);
+  show(fs, (i8 *)"filesystem");
+  ptr idx1 = create_inode(fs, parse_name((i8 *)"hello.bat"), FileType);
+  ptr idx2 = create_inode(fs, parse_name((i8 *)"helog"), DirType);
   // Fix this
-  Dir *dir = open_dir("c:/helog");
+  Dir *dir = open_dir((i8 *)"c:/helog");
   if (!dir) {
     print_err();
-    printf("bye\n");
     return;
   }
   print_hex(dir, sizeof(Dir));
 
   //  Fix this shows way too many inodes and many were empty
-   show(fetchinode(fs,1),"inode");
+   show(fetchinode(fs,1),(i8 *)"inode");
    Ls * ls = listfiles(fs,fetchinode(fs,0));
    printf("%d\n",ls->count);
   inode_dealloc(fs, idx1);
@@ -91,7 +91,7 @@ void cmd_format(i8 *s1, i8 *s2) {
 int main(int argc, char *argv[]) {
   char *s1, *s2;
   if (argc < 2)
-    usage_format(argv[0]);
+    usage_format((i8 *)argv[0]);
   else if (argc == 2)
     s1 = s2 = 0;
   else if (argc == 3) {
@@ -101,11 +101,11 @@ int main(int argc, char *argv[]) {
     s1 = argv[2];
     s2 = argv[3];
   }
-  i8 *cmd = argv[1];
-  if (!strcmp(cmd, "format"))
-    cmd_format(s1, s2);
+  i8 *cmd = (i8 *)argv[1];
+  if (!strcmp((const char *)cmd, "format"))
+    cmd_format((i8 * )s1, (i8  *)s2);
   else
-    usage(argv[1]);
+    usage((i8 *)argv[1]);
 
   return 0;
 }
