@@ -1,4 +1,4 @@
-flags=-O2 -std=c2x -I.
+flags=-O2 -std=c2x -I. -g
 ldflags=-ldl -shared -fPIC
 objects = api.o disk.o stdoslib.o fs.o
 CFLAGS = 

@@ -7,17 +7,19 @@ internal i8 attached;
 public Disk *DiskDescriptor[MAX_DD];
 
 public void dinit() {
+  i8 n;
+
   attached = 0;
-  int n;
-  for (n = 1; n <= MAX_DD; n++)
-    DiskDescriptor[n - 1] = attach(n);
+ for (n=1; n<=MAX_DD; n++)
+      *(DiskDescriptor+(n-1)) = attach(n);
+  
+  if (*DiskDescriptor)
+      fsmount(1);
 
-  if (*DiskDescriptor) {
-    fsformat(DiskDescriptor[0], NULL, 0);
-  }
+ for (n=1; n<=MAX_DD; n++)
+      detach(DiskDescriptor[(n-1)]);
 
-  for (n = 1; n <= MAX_DD; n++)
-    detach(DiskDescriptor[n - 1]);
+  return;
 }
 
 internal i8 *numppend(i8 *a, i8 n) {
@@ -32,7 +34,7 @@ internal i8 *numppend(i8 *a, i8 n) {
   return (i8 *)buff;
 }
 
-public void disk_info(Disk *dd) {
+public void Disk_info(Disk *dd) {
   if (!dd || !dd->drive_no)
     return;
   printf("------(Disk %d)------\nAttached ? %s\nPath : %s\nFD -> %d\nBlock "
@@ -42,36 +44,44 @@ public void disk_info(Disk *dd) {
 }
 
 internal Disk *attach(i8 d_no) {
-  if (d_no == 1 || d_no == 2)
-    ;
-  else
-    return (Disk *)0;
-  if (attached & d_no)
-    return (Disk *)0;
-  Disk *dd = (Disk *)alloc(sizeof(Disk));
-  if (!dd) {
-    dealloc(dd);
-    return (Disk *)0;
-  }
-  i8 *path = numppend((i8 * )Basepath, d_no);
-  int fd = open((char *)path, O_RDWR);
-  if (fd < 3) {
-    close(dd->fd);
-    dealloc(dd);
-    return (Disk *)0;
-  }
-  dd->fd = fd;
-  dd->drive_no = d_no;
-  struct stat buf;
-  int t = fstat(dd->fd, &buf);
-  if (t) {
-    close(dd->fd);
-    dealloc(dd);
-    return (Disk *)0;
-  }
-  dd->blocks = (buf.st_blocks - 1);
-  attached |= d_no;
-  return dd;
+    Disk *dd;
+    i16 size;
+    i8 *file;
+    signed int tmp;
+    struct stat sbuf;
+
+    if ((d_no==1) || (d_no==2));
+    else return (Disk *)0;
+
+    if (attached & d_no)
+        return (Disk *)0;
+
+    size = sizeof(Disk);
+    dd = (Disk *)malloc(size);
+    if (!dd)
+        return (Disk *)0;
+    
+    zero(dd, size);
+    file = numppend((i8 *)Basepath, d_no);
+    tmp = open((char *)file, O_RDWR);
+    if (tmp < 3) {
+        free(dd);
+        return (Disk *)0;
+    }
+    dd->fd = tmp;
+
+    tmp = fstat(dd->fd, &sbuf);
+    if (tmp || !sbuf.st_blocks)
+    {
+        close(dd->fd);
+        free(dd);
+
+        return (Disk *)0;
+    }
+    dd->blocks = (sbuf.st_blocks-1);
+    dd->drive_no = d_no;
+    attached |= d_no;
+    return dd;
 }
 
 internal void detach(Disk *dd) {

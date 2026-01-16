@@ -16,6 +16,7 @@ typedef unsigned long i64;
 /* MACROS */
 #define public __attribute__((visibility("default")))
 #define internal __attribute__((visibility("hidden")))
+#define packed __attribute__((packed))
 #define private static
 /* MACROS */
 
@@ -37,24 +38,24 @@ typedef unsigned long i64;
 /* Definations */
 typedef i16 ptr;
 typedef i8 Bootsector[500];
-enum internal packed e_type {
+enum internal e_type {
   InvalidType = 0x00,
   FileType = 0x01,
   DirType = 0x03
-};
+} packed;
 typedef enum e_type Type;
 
 typedef i8 Bitmap;
 
 /* Superblock 512B */
-struct internal s_sb {
+struct packed internal s_sb {
   Bootsector boot; // 500 bytes bootsector code         = 500 bytes
   i16 _;           // Reserved 2 bytes 0x00             = 2 bytes
   i16 blocks;      // No of Blocks                      = 2 bytes
   i16 inodes;      // No of Inodes                      = 2 bytes
   i16 inodeblocks; // No of Inode Blocks                = 2 bytes
   i16 magic[2];    // Magic string hex {0xfade,0xaa55}  = 4 bytes
-} packed;          /*512 Bytes*/
+};          /*512 Bytes*/
 
 typedef struct s_sb Suprblk;
 
