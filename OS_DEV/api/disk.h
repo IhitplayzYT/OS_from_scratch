@@ -12,7 +12,6 @@
 #ifndef DISK
 #define DISK
 
-#endif
 
 /* Typedefinations */
 typedef unsigned char i8;
@@ -43,11 +42,11 @@ typedef unsigned long i64;
 /* MACROS */
 
 /* Structs */
-struct internal packed s_disk{
+struct s_disk{
 i32 fd;
 i16 blocks;
 i8 drive_no:2;
-};
+} packed;
 typedef struct s_disk Disk;
 typedef i8 Block[512];
 typedef i8 Bootsector[500];
@@ -68,3 +67,5 @@ internal i8 * numppend(i8 *,i8); /* Appends a number to end of a string */
 internal Filesystem* fsmount(i8);
 
 /* Function Signatures */
+
+#endif

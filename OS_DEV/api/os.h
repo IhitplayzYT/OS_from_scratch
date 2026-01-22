@@ -33,13 +33,12 @@ extern public i8 INIT_FLAG;
 
 
 /* Error Number defs */
-public enum{NO_ERR,BAD_FD,IO_ERR,CLOSED_FD,NO_INIT_ERR,BUFF_OVRFLW,NOT_MOUNT_ERR,DISK_IO_ERR,BUSY_ERR,MEM_ERR,BAD_ARG,BAD_FILE_NAME,INODE_ERR,LIMIT_ERR,NET_ERR,BAD_DIR,TYPE_ERR,PATH_ERR,FILE_NOT_FOUND};
+enum{NO_ERR,BAD_FD,IO_ERR,CLOSED_FD,NO_INIT_ERR,BUFF_OVRFLW,NOT_MOUNT_ERR,DISK_IO_ERR,BUSY_ERR,MEM_ERR,BAD_ARG,BAD_FILE_NAME,INODE_ERR,LIMIT_ERR,NET_ERR,BAD_DIR,TYPE_ERR,PATH_ERR,FILE_NOT_FOUND} public;
 /* Error Number defs */
 
 /*Function Signatures */
 public i8 write_byte(i8, i8); /* Writes a singular byte to a fd */
 public i8 read_byte(i8); /* Reads a singular byte from a fd */
-public int getposixfd(i8); /* Return the posixFD for our FD */
 public void init(); /* Initialises some functionalities */
 public void dinit(); /* Initialises the disk/drive*/
 public i8 get_errno();  /* Returns the Err_Number */

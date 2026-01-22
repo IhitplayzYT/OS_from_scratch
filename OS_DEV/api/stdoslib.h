@@ -752,6 +752,8 @@ i8 hex2ascii(i8 *); // Converts a hex string into a singular ascii byte
 /* Function Signatures */
 public
 i16 c_freq(i8 *, i8);
+public i8* find_chr(char *,char);
+public i8* find_chrr(char *,char);
 public
 i16 s_freq(i8 *, i8 *);
 public

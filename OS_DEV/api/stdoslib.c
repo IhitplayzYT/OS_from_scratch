@@ -662,3 +662,17 @@ if (!ret) return (i8*)0;
 for (i32 i = 0;i < n;i++) ret[i] = flip_byte(s[i]);
 return ret;
 }
+
+
+public i8* find_chr(char *s,char c){
+for (i8* p = (i8 *)s; p ;p++){
+    if (*p == c){return p;}
+}
+return 0;
+}
+public i8* find_chrr(char *s,char c){
+for (int i = len(s) - 1;i >= 0 ; i--){
+    if (s[i] == c) return (i8 *)s + i;
+}
+return 0;
+}

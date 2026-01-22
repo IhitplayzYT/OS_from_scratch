@@ -63,7 +63,7 @@ for (int i = 2;i < MAX_FD ;i ++)fds[i] = 0;
 }
 
 public void print_err(){
-printf(ERR_STR,err_number,err[err_number]);
+printf(ERR_STR,__FILE__,__LINE__,err_number,err[err_number]);
 }
 
 public void init(){
