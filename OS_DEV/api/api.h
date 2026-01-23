@@ -33,6 +33,6 @@ typedef unsigned long i64;
 /* Definations */
 
 /* Function Signatures */
-private i8 isopen(i8);
-private void init_fds();
+private i8 isopen(i8); // Checks if fd is open
+private void init_fds(); // Inits Fd list 
 /* Function Signatures */

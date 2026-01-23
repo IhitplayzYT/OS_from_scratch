@@ -199,7 +199,7 @@ v->cap = 2;
 v->type = sz * 8;
 v->append = v_append;
 v->pop = v_pop;
-v->iterator = iterator;
+v->iterator = Iterator_init;
 v->data = (void **)alloc(sizeof(void *) * v->cap);
 if (!v->data) {dealloc(v);return (Vector*)0;}
 v->data[v->l++] = data;
@@ -222,7 +222,7 @@ v->l = (v->l)?--v->l:v->l;
 v->data[v->l]= NULL;
 }
 
-Iterator * iterator(struct s_vector* v){
+Iterator * Iterator_init(struct s_vector* v){
 Iterator * iter = (Iterator *)alloc(sizeof(Iterator));
 if (!iter) return (Iterator*)0;
 iter->i = 0;
@@ -382,7 +382,7 @@ public i8* fmttime(Time * ts){
 if (!ts) ts = curr_time();
 i8* buff = (i8*)alloc(50);
 if (!buff) return (i8*)0;
-snprintf(buff,49,"%s, %.02hu:%.02hu:%.02hu , %.02hu %s,%.04hu",(ts->weekday == 0)?"Monday":(ts->weekday ==1)?"Tuesday":(ts->weekday == 2)?"Wednesday":(ts->weekday == 3)?"Thursday":(ts->weekday == 4)?"Friday":(ts->weekday == 5)?"Saturday":(ts->weekday == 6)?"Sunday":"INVALID",ts->hours,ts->minutes,ts->seconds,ts->date_of_month,(ts->month == 1)?"January":(ts->month == 2)?"February":(ts->month == 3)?"March":(ts->month == 4)?"April":(ts->month == 5)?"May":(ts->month == 6)?"June":(ts->month == 7)?"July":(ts->month == 8)?"August":(ts->month == 9)?"September":(ts->month == 10)?"October":(ts->month == 11)?"November":(ts->month == 12)?"December":"INVALID",ts->years);
+snprintf((char *)buff,49,"%s, %.02hu:%.02hu:%.02hu , %.02hu %s,%.04hu",(ts->weekday == 0)?"Monday":(ts->weekday ==1)?"Tuesday":(ts->weekday == 2)?"Wednesday":(ts->weekday == 3)?"Thursday":(ts->weekday == 4)?"Friday":(ts->weekday == 5)?"Saturday":(ts->weekday == 6)?"Sunday":"INVALID",ts->hours,ts->minutes,ts->seconds,ts->date_of_month,(ts->month == 1)?"January":(ts->month == 2)?"February":(ts->month == 3)?"March":(ts->month == 4)?"April":(ts->month == 5)?"May":(ts->month == 6)?"June":(ts->month == 7)?"July":(ts->month == 8)?"August":(ts->month == 9)?"September":(ts->month == 10)?"October":(ts->month == 11)?"November":(ts->month == 12)?"December":"INVALID",ts->years);
 return buff;
 }
 
@@ -559,6 +559,7 @@ if (rem > 9) ret[1] = 'A' + (rem-10);
 else ret[1] = '0' + rem;
 x /= 16;
 }
+return ret;
 }
 
 
