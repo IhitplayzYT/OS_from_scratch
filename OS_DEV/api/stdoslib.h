@@ -11,6 +11,10 @@ typedef unsigned char i8;
 typedef unsigned short i16;
 typedef unsigned int i32;
 typedef unsigned long i64;
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long u64;
 typedef signed char s8;
 typedef signed short s16;
 typedef signed int s32;
@@ -19,6 +23,7 @@ typedef float f32;
 typedef double f64;
 typedef unsigned char byte;
 typedef unsigned char boolean;
+typedef char String;
 /* Typedefinations */
 /* MACROS */
 #define true 1
@@ -45,66 +50,93 @@ typedef unsigned char boolean;
 #define BUFF512 512
 #define BUFF1024 1024
 #define BUFF2048 2048
-#define BUFF4096 4096 
+#define BUFF4096 4096
 #define BUFF8192 8192
 #define KiB 1024
-#define KB  1000
+#define KB 1000
 #define MiB 1048576
-#define MB  1000000
+#define MB 1000000
 #define GiB 1073741824
-#define GB  1000000000
-
+#define GB 1000000000
+#define ERR_STR "Error %d:[%s;%d]: %s\n"
 #define public __attribute__((visibility("default")))
 #define internal __attribute__((visibility("hidden")))
 #define constructor __attribute__((constructor))
 #define private static
 #define packed __attribute__((packed))
-
+#define FREE(a, ...) freeall(a, __VA_ARGS__, NULL)
 typedef __builtin_va_list va_list;
 #define va_start(ap, last) __builtin_va_start(ap, last)
 #define va_arg(ap, type) __builtin_va_arg(ap, type)
 #define va_end(ap) __builtin_va_end(ap)
 #define trash(arg, ...) ((void)0)
+#define use(a) ((void)(a))
 
-#define alloc(size) malloc((int)size)  // A malloc hook that may be in future might be modified
-#define dealloc(ptr) free(ptr) // A free hook that may be in future might be modified
-#define fill(dest, len, byte) _fill((i8 *)dest, len, (i8)byte) // Populates len bytes of dest with byte provided
-#define strcopy(dest, src) _copy((dest), (src)) // A string copy that copies from 
-#define copy(dest, src, len) _copyn((i8 *)(dest), (i8 *)(src), (len), 1) // Copies len bytes from src to dest
-#define strncopy(dest, src, len) _copyn((src), (dest), (len), 0)  // Copies len bytes from src to dest if '\0' not encountered
-#define memcopy(dest, src, len) _copyn((i8 *)(dest), (i8 *)(src), (len), 1) // Copies len bytes from src to dest
-#define kprintf(format, args...) printf(format "\n", args)  // A placeholder for Kernel printf
-#define zero(src, len) _fill((i8 *)src, len, 0)  // Zeros out len bytes in src
-#define memcomp(mem1, mem2, len) _memcomp((i8 *)mem1, (i8 *)mem2, (i16)len) // Compares two memory locations for len bytes
-#define strcomp(s1, s2) _strcomp((i8 *)(s1), (i8 *)(s2)) // Compares two strings for lexical ordering
-#define freq(x, y) _Generic((y), i8 *: s_freq, i8: c_freq)(x, y) // A amcro for mathcing based o 
-private signed short _strcomp(i8 *, i8 *);  // Compares two strings for lexical ordering
-#define new(NAME, ...) NAME##_init((void *)0, __VA_ARGS__, NULL) // A macro for calling a constructor of type NAME_init
+typedef enum Type { t_char, t_int, t_float, t_charptr, t_bool } Type;
+
+#define alloc(size)                                                            \
+  malloc((int)size) // A malloc hook that may be in future might be modified
+#define dealloc(ptr)                                                           \
+  free(ptr) // A free hook that may be in future might be modified
+#define fill(dest, len, byte)                                                  \
+  _fill((i8 *)dest, len,                                                       \
+        (i8)byte) // Populates len bytes of dest with byte provided
+#define strcopy(dest, src)                                                     \
+  _copy((dest), (src)) // A string copy that copies from
+#define copy(dest, src, len)                                                   \
+  _copyn((i8 *)(dest), (i8 *)(src), (len),                                     \
+         1) // Copies len bytes from src to dest
+#define strncopy(dest, src, len)                                               \
+  _copyn((src), (dest), (len),                                                 \
+         0) // Copies len bytes from src to dest if '\0' not encountered
+#define memcopy(dest, src, len)                                                \
+  _copyn((i8 *)(dest), (i8 *)(src), (len),                                     \
+         1) // Copies len bytes from src to dest
+#define kprintf(format, args...)                                               \
+  printf(format "\n", args) // A placeholder for Kernel printf
+#define zero(src, len) _fill((i8 *)src, len, 0) // Zeros out len bytes in src
+#define memcomp(mem1, mem2, len)                                               \
+  _memcomp((i8 *)mem1, (i8 *)mem2,                                             \
+           (i16)len) // Compares two memory locations for len bytes
+#define strcomp(s1, s2)                                                        \
+  _strcomp((i8 *)(s1), (i8 *)(s2)) // Compares two strings for lexical ordering
+#define freq(x, y)                                                             \
+  _Generic((y),                                                                \
+      i8 *: s_freq,                                                            \
+      i8: c_freq,                                                              \
+      char: c_freq,                                                            \
+      char *: s_freq,                                                          \
+      int: c_freq)((i8 *)x, y) // A macro for returning the count of occurence
+                               // of an elem in a string
+private
+signed short _strcomp(i8 *, i8 *); // Compares two strings for lexical ordering
+#define new(NAME, ...)                                                         \
+  NAME##_init((void *)0, __VA_ARGS__,                                          \
+              NULL) // A macro for calling a constructor of type NAME_init
 
 // A small strict compare macro for primitve types ONLY (===)
 #define compare(x, y) _compare((x), (y)) && ((x) == (y))
-#define _compare(x, y)                            \
-_Generic((x),                                   \
-  signed char: _Generic((y),                \
-  signed char: 1,                           \
-  default: 0) unsigned char: _Generic((y),  \
-  unsigned char: 1,                         \
-  default: 0) unsigned short: _Generic((y), \
-  unsigned short: 1,                        \
-  default: 0) signed short: _Generic((y),   \
-  signed short: 1,                          \
-  default: 0) unsigned int: _Generic((y),   \
-  unsigned int: 1,                          \
-  default: 0) signed int: _Generic((y),     \
-  signed int: 1,                            \
-  default: 0) unsigned long: _Generic((y),  \
-  unsigned long: 1,                         \
-  default: 0) signed long: _Generic((y),    \
-  signed long: 1,                           \
-  default: 0) float: _Generic((y),          \
-  float: 1,                                 \
-  default: 0)                               \
-  double: _Generic((y), double: 1, default: 0))
+#define _compare(x, y)                                                         \
+  _Generic((x),                                                                \
+      signed char: _Generic((y),                                               \
+          signed char: 1,                                                      \
+          default: 0) unsigned char: _Generic((y),                             \
+          unsigned char: 1,                                                    \
+          default: 0) unsigned short: _Generic((y),                            \
+          unsigned short: 1,                                                   \
+          default: 0) signed short: _Generic((y),                              \
+          signed short: 1,                                                     \
+          default: 0) unsigned int: _Generic((y),                              \
+          unsigned int: 1,                                                     \
+          default: 0) signed int: _Generic((y),                                \
+          signed int: 1,                                                       \
+          default: 0) unsigned long: _Generic((y),                             \
+          unsigned long: 1,                                                    \
+          default: 0) signed long: _Generic((y),                               \
+          signed long: 1,                                                      \
+          default: 0) float: _Generic((y),                                     \
+          float: 1,                                                            \
+          default: 0) double: _Generic((y), double: 1, default: 0))
 
 // An Iterator class to iterate over the iterable
 struct s_iter {
@@ -114,7 +146,7 @@ struct s_iter {
 };
 typedef struct s_iter Iterator;
 
-// A variable length array class 
+// A variable length array class
 struct s_vector {
   i32 l, cap;
   i32 type;
@@ -133,7 +165,7 @@ struct s_tuple {
 };
 typedef struct s_tuple Tuple;
 
-// Time struct 
+// Time struct
 struct s_time {
   i16 seconds;
   i16 minutes;
@@ -148,149 +180,149 @@ struct s_time {
 typedef struct s_time Time;
 
 // Boilerplate for sort api
-#define DEFINE_NUM_SORT(TYPE, NAME)                           \
-  static inline void NAME(TYPE *arr, i16 n, i8 asc) {         \
-    if (n < 2)                                                \
-      return;                                                 \
-    i16 mid = n / 2;                                          \
-    TYPE *left = (TYPE *)alloc(mid * sizeof(TYPE));           \
-    TYPE *right = (TYPE *)alloc((n - mid) * sizeof(TYPE));    \
-    for (i16 i = 0; i < mid; i++)                             \
-      left[i] = arr[i];                                       \
-    for (i16 i = mid; i < n; i++)                             \
-      right[i - mid] = arr[i];                                \
-    NAME(left, mid, asc);                                     \
-    NAME(right, n - mid, asc);                                \
-    i16 i = 0, j = 0, k = 0;                                  \
-    while (i < mid && j < n - mid) {                          \
-      if (!asc ? (left[i] <= right[j]) : (left[i] >= right[j]))\
-        arr[k++] = left[i++];                                  \
-      else                                                     \
-        arr[k++] = right[j++];                                 \
-    }                                                          \
-    while (i < mid)                                            \
-      arr[k++] = left[i++];                                    \
-    while (j < n - mid)                                        \
-      arr[k++] = right[j++];                                   \
-    dealloc(left);                                             \
-    dealloc(right);                                            \
+#define DEFINE_NUM_SORT(TYPE, NAME)                                            \
+  static inline void NAME(TYPE *arr, i16 n, i8 asc) {                          \
+    if (n < 2)                                                                 \
+      return;                                                                  \
+    i16 mid = n / 2;                                                           \
+    TYPE *left = (TYPE *)alloc(mid * sizeof(TYPE));                            \
+    TYPE *right = (TYPE *)alloc((n - mid) * sizeof(TYPE));                     \
+    for (i16 i = 0; i < mid; i++)                                              \
+      left[i] = arr[i];                                                        \
+    for (i16 i = mid; i < n; i++)                                              \
+      right[i - mid] = arr[i];                                                 \
+    NAME(left, mid, asc);                                                      \
+    NAME(right, n - mid, asc);                                                 \
+    i16 i = 0, j = 0, k = 0;                                                   \
+    while (i < mid && j < n - mid) {                                           \
+      if (!asc ? (left[i] <= right[j]) : (left[i] >= right[j]))                \
+        arr[k++] = left[i++];                                                  \
+      else                                                                     \
+        arr[k++] = right[j++];                                                 \
+    }                                                                          \
+    while (i < mid)                                                            \
+      arr[k++] = left[i++];                                                    \
+    while (j < n - mid)                                                        \
+      arr[k++] = right[j++];                                                   \
+    dealloc(left);                                                             \
+    dealloc(right);                                                            \
   }
 
 // Boiler plate for string sort api
-#define DEFINE_STRING_SORT(TYPE, NAME)                          \
-  static inline void NAME(TYPE **arr, i16 n, i8 asc) {          \
-    if (n < 2)                                                  \
-      return;                                                   \
-    i16 mid = n / 2;                                            \
-    TYPE **left = (TYPE **)alloc(mid * sizeof(TYPE *));         \
-    TYPE **right = (TYPE **)alloc((n - mid) * sizeof(TYPE *));  \
-    for (i16 i = 0; i < mid; i++)                               \
-      left[i] = arr[i];                                         \
-    for (i16 i = mid; i < n; i++)                               \
-      right[i - mid] = arr[i];                                  \
-    NAME(left, mid, asc);                                       \
-    NAME(right, n - mid, asc);                                  \
-    i16 i = 0, j = 0, k = 0;                                    \
-    while (i < mid && j < n - mid) {                            \
-      if (!asc ? (strcomp(left[i], right[j]) <= 0)              \
-               : (strcomp(left[i], right[j]) >= 0))             \
-        arr[k++] = left[i++];                                   \
-      else                                                      \
-        arr[k++] = right[j++];                                  \
-    }                                                           \
-    while (i < mid)                                             \
-      arr[k++] = left[i++];                                     \
-    while (j < n - mid)                                         \
-      arr[k++] = right[j++];                                    \
-    dealloc(left);                                              \
-    dealloc(right);                                             \
+#define DEFINE_STRING_SORT(TYPE, NAME)                                         \
+  static inline void NAME(TYPE **arr, i16 n, i8 asc) {                         \
+    if (n < 2)                                                                 \
+      return;                                                                  \
+    i16 mid = n / 2;                                                           \
+    TYPE **left = (TYPE **)alloc(mid * sizeof(TYPE *));                        \
+    TYPE **right = (TYPE **)alloc((n - mid) * sizeof(TYPE *));                 \
+    for (i16 i = 0; i < mid; i++)                                              \
+      left[i] = arr[i];                                                        \
+    for (i16 i = mid; i < n; i++)                                              \
+      right[i - mid] = arr[i];                                                 \
+    NAME(left, mid, asc);                                                      \
+    NAME(right, n - mid, asc);                                                 \
+    i16 i = 0, j = 0, k = 0;                                                   \
+    while (i < mid && j < n - mid) {                                           \
+      if (!asc ? (strcomp(left[i], right[j]) <= 0)                             \
+               : (strcomp(left[i], right[j]) >= 0))                            \
+        arr[k++] = left[i++];                                                  \
+      else                                                                     \
+        arr[k++] = right[j++];                                                 \
+    }                                                                          \
+    while (i < mid)                                                            \
+      arr[k++] = left[i++];                                                    \
+    while (j < n - mid)                                                        \
+      arr[k++] = right[j++];                                                   \
+    dealloc(left);                                                             \
+    dealloc(right);                                                            \
   }
 
 // Boilerplate for minimum of a variadic number of strings
-#define DEFINE_MIN_STR(TYPE, name)         \
-  static inline TYPE *name(TYPE *X, ...) { \
-    va_list args;                          \
-    va_start(args, X);                     \
-    TYPE *next;                            \
-    TYPE *min = X;                         \
-    while ((next = va_arg(args, TYPE *))) {\
-      if (strcomp(next, min) == -1)        \
-        min = next;                        \
-    }                                      \
-    va_end(args);                          \
-    return min;                            \
+#define DEFINE_MIN_STR(TYPE, name)                                             \
+  static inline TYPE *name(TYPE *X, ...) {                                     \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    TYPE *next;                                                                \
+    TYPE *min = X;                                                             \
+    while ((next = va_arg(args, TYPE *))) {                                    \
+      if (strcomp(next, min) == -1)                                            \
+        min = next;                                                            \
+    }                                                                          \
+    va_end(args);                                                              \
+    return min;                                                                \
   }
 
 // Boilerplate for maximum of a variadic number of strings
-#define DEFINE_MAX_STR(TYPE, name)          \
-  static inline TYPE *name(TYPE *X, ...) {  \
-    va_list args;                           \
-    va_start(args, X);                      \
-    TYPE *next;                             \
-    TYPE *max = X;                          \
-    while ((next = va_arg(args, TYPE *))) { \
-      if (strcomp(next, max) == 1)          \
-        max = next;                         \
-    }                                       \
-    va_end(args);                           \
-    return max;                             \
+#define DEFINE_MAX_STR(TYPE, name)                                             \
+  static inline TYPE *name(TYPE *X, ...) {                                     \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    TYPE *next;                                                                \
+    TYPE *max = X;                                                             \
+    while ((next = va_arg(args, TYPE *))) {                                    \
+      if (strcomp(next, max) == 1)                                             \
+        max = next;                                                            \
+    }                                                                          \
+    va_end(args);                                                              \
+    return max;                                                                \
   }
 
 // A macro for finding minimum in a variadic argument list
-#define DEFINE_MIN(TYPE, name)             \
-  static inline TYPE name(TYPE X, ...) {   \
-    va_list args;                          \
-    va_start(args, X);                     \
-    TYPE next;                             \
-    TYPE min = X;                          \
-    while ((next = va_arg(args, TYPE))) {  \
-      if (min > next)                      \
-        min = next;                        \
-    }                                      \
-    va_end(args);                          \
-    return min;                            \
+#define DEFINE_MIN(TYPE, name)                                                 \
+  static inline TYPE name(TYPE X, ...) {                                       \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    TYPE next;                                                                 \
+    TYPE min = X;                                                              \
+    while ((next = va_arg(args, TYPE))) {                                      \
+      if (min > next)                                                          \
+        min = next;                                                            \
+    }                                                                          \
+    va_end(args);                                                              \
+    return min;                                                                \
   }
 
-// A macro for finding maximum in a variadic argument list 
-  #define DEFINE_MAX(TYPE, name)            \
-  static inline TYPE name(TYPE X, ...) {  \
-    va_list args;                         \
-    va_start(args, X);                    \
-    TYPE next;                            \
-    TYPE max = X;                         \
-    while ((next = va_arg(args, TYPE))) { \
-      if (max < next)                     \
-        max = next;                       \
-    }                                     \
-    va_end(args);                         \
-    return max;                           \
+// A macro for finding maximum in a variadic argument list
+#define DEFINE_MAX(TYPE, name)                                                 \
+  static inline TYPE name(TYPE X, ...) {                                       \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    TYPE next;                                                                 \
+    TYPE max = X;                                                              \
+    while ((next = va_arg(args, TYPE))) {                                      \
+      if (max < next)                                                          \
+        max = next;                                                            \
+    }                                                                          \
+    va_end(args);                                                              \
+    return max;                                                                \
   }
 // A macro for finding minimum in an array
-#define DEFINE_MIN_ARR(TYPE, name)        \
-  static inline TYPE name(TYPE *X, ...) { \
-    TYPE min = *X;                        \
-    va_list args;                         \
-    va_start(args, X);                    \
-    i32 l = va_arg(args, i32);            \
-    for (int i = 0; i < l; i++)           \
-      if (*(X + i) < min)                 \
-        min = *(X + i);                   \
-    va_end(args);                         \
-    return min;                           \
+#define DEFINE_MIN_ARR(TYPE, name)                                             \
+  static inline TYPE name(TYPE *X, ...) {                                      \
+    TYPE min = *X;                                                             \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    i32 l = va_arg(args, i32);                                                 \
+    for (int i = 0; i < l; i++)                                                \
+      if (*(X + i) < min)                                                      \
+        min = *(X + i);                                                        \
+    va_end(args);                                                              \
+    return min;                                                                \
   }
 
 // A macro for finding maximum in an array
-#define DEFINE_MAX_ARR(TYPE, name) \
-  static inline TYPE name(TYPE *X, ...) {\
-    TYPE max = *X;                       \
-    va_list args;                        \
-    va_start(args, X);                   \
-    i32 l = va_arg(args, i32);           \
-    for (int i = 0; i < l; i++)          \
-      if (*(X + i) > max)                \
-        max = *(X + i);                  \
-    va_end(args);                        \
-    return max;                          \
+#define DEFINE_MAX_ARR(TYPE, name)                                             \
+  static inline TYPE name(TYPE *X, ...) {                                      \
+    TYPE max = *X;                                                             \
+    va_list args;                                                              \
+    va_start(args, X);                                                         \
+    i32 l = va_arg(args, i32);                                                 \
+    for (int i = 0; i < l; i++)                                                \
+      if (*(X + i) > max)                                                      \
+        max = *(X + i);                                                        \
+    va_end(args);                                                              \
+    return max;                                                                \
   }
 
 // A macro for finding minimum in a variadic arguemnt string list
@@ -336,7 +368,7 @@ DEFINE_NUM_SORT(float, sort_f)
 DEFINE_NUM_SORT(double, sort_d)
 DEFINE_STRING_SORT(char, _strsort)
 
-// Code generation for the functions of minimum in array 
+// Code generation for the functions of minimum in array
 DEFINE_MIN_ARR(i16, min_i16a);
 DEFINE_MIN_ARR(i32, min_i32a);
 DEFINE_MIN_ARR(i64, min_i64a);
@@ -349,7 +381,7 @@ DEFINE_MIN_ARR_S(i8, min_i8sa);
 DEFINE_MIN_ARR_S(s8, min_s8sa);
 DEFINE_MIN_ARR_S(char, min_csa);
 
-// Code generation for the functions of maximum in array 
+// Code generation for the functions of maximum in array
 DEFINE_MAX_ARR(i16, max_i16a);
 DEFINE_MAX_ARR(i32, max_i32a);
 DEFINE_MAX_ARR(i64, max_i64a);
@@ -380,26 +412,26 @@ DEFINE_MAX(f64, max_d);
 DEFINE_MAX_STR(i8, max_i8s);
 DEFINE_MAX_STR(s8, max_s8s);
 
-//Boilerplate for printing an array
-#define DEF_PRINT_ARR(TYPE, name, fmt)    \
-  static inline void name(TYPE arr, ...) {\
-    va_list args;                         \
-    va_start(args, arr);                  \
-    i32 l = va_arg(args, i32);            \
-    for (int i = 0; i < l; i++)           \
-      printf(fmt, arr[i]);                \
-    printf("\n");                         \
-    va_end(args);                         \
+// Boilerplate for printing an array
+#define DEF_PRINT_ARR(TYPE, name, fmt)                                         \
+  static inline void name(TYPE arr, ...) {                                     \
+    va_list args;                                                              \
+    va_start(args, arr);                                                       \
+    i32 l = va_arg(args, i32);                                                 \
+    for (int i = 0; i < l; i++)                                                \
+      printf(fmt, arr[i]);                                                     \
+    printf("\n");                                                              \
+    va_end(args);                                                              \
   }
 
-//Boilerplate for printing an varaidic args list
+// Boilerplate for printing an varaidic args list
 #define DEF_PRINT_ARGS(TYPE, name, fmt)                                        \
   static inline void name(TYPE a, ...) {                                       \
     va_list args;                                                              \
     va_start(args, a);                                                         \
     TYPE c = a;                                                                \
     printf(fmt, c);                                                            \
-    while ((c = va_arg(args, TYPE)))                                             \
+    while ((c = va_arg(args, TYPE)))                                           \
       printf(fmt, c);                                                          \
     printf("\n");                                                              \
     va_end(args);                                                              \
@@ -456,8 +488,10 @@ DEF_PRINT_ARGS(f64, print_f64, "%lf ");
       char: print_chars)(x, __VA_ARGS__, NULL)
 
 static signed short _strcomp(i8 *a, i8 *b) {
-  if (!a || !*a) return -1;
-  if (!b || !*b) return 1;
+  if (!a || !*a)
+    return -1;
+  if (!b || !*b)
+    return 1;
   i8 *p = a, *q = b;
   while (*p && *q) {
     if (*p > *q)
@@ -469,7 +503,6 @@ static signed short _strcomp(i8 *a, i8 *b) {
   }
   return (*p == *q) ? 0 : (!*p) ? -1 : 1;
 }
-
 
 #define DEF_FIXED(TYPE, name)                                                  \
   static inline TYPE name(TYPE arg, i32 len) {                                 \
@@ -689,7 +722,8 @@ DEF_LEN(s8 *, len_s8);
     return ret;                                                                \
   };
 
-// Token struct returned by tokenise() it is a fixed size list conataining it's length and tokens
+// Token struct returned by tokenise() it is a fixed size list conataining it's
+// length and tokens
 struct s_Tok_ret {
   i8 **ret;
   i16 n;
@@ -697,68 +731,162 @@ struct s_Tok_ret {
 typedef struct s_Tok_ret Tokens;
 
 /* Function Signatures */
-public void _fill(i8 *, i16, i8); /* Fills fixed no of bytes to input hex/char */
-public i16 _copy(i8 *, i8 *); /* Copy contents from second to first string */
-public i16 _copyn(i8 *, i8 *, i16, i8); /* Copy a 'N' chars from src to dest string*/
-public i8 *concat(i8 * str1, i8 *str2); /* Concats two strings */
-public i16 floor_div(i16 num, i16 denom); /* Floor division of the two arguments */
-public i16 ceil_div(i16 num, i16 denom); /* Ceil division of the two arguments */
-public void print_bytes(void * mem, i32 len); /* Prints len byes from the start of mem */
-public void print_hex(void *, i32);  /* Prints len byes from the start of mem in formated manner similar to output of hexdump */
-public i8 _getbit(i8 *,i16);     /* Used to get the nth bit from the memory location */
-public void _setbit(i8 *,i16);   /* Used to set the nth bit from the memory location */ 
-public void _unsetbit(i8 *,i16); /* Used to unset the nth bit from the memory location */
-public void _flipbit(i8 *,i16);  /* Used to flip the nth bit from the memory location */
-public i8 getbit(i8 * mem,i16 n);    /* Used to get the nth bit from the memory location */
-public void setbit(i8 *mem ,i16 n);  /* Used to set the nth bit from the memory location */
-public void unsetbit(i8 *mem,i16 n); /* Used to unset the nth bit from the memory location */
-public void flipbit(i8 *mem ,i16 n); /* Used to flip the nth bit from the memory location */
-public double precision(double num,i8 prec); /* Round num to prec decimal positions */
-public i32 ipaddr(i8 *); /* Coverts an IP string to its byte form */
-public i8 *ipstr(i32); /* Converts an IP in byte form into a IP string */
-public i16 net_port(i16); /* Htons for port */
-public i16 endian16(i16 x); /* Endian format for i16*/
-public i32 endian32(i32 x); /* Endian format for i16*/
-public i64 endian64(i64 x); /* Endian format for i16*/
-public Vector *Vector_init(void *, ...); /* Constructor for vector */
-public Tuple *Tuple_init(void *, ...); /* Constructor for tuple */
-public void v_append(struct s_vector *, void *); /* vector function family */
-public void t_add(Tuple *, void *); /* vector function family */
-public void v_print(struct s_vector *); /* vector function family */
-public void v_pop(struct s_vector *); /* vector function family */
-Iterator *Iterator_init(struct s_vector *);  /* Constructor for iterator types */
-void *next(Iterator *); /* Next functions for a iterator */
-public int _stoi(i8 * str); /* String to int */
-public i64 _stoi64(i8 * str); /* String to i64 */
-public i32 _stoi32(i8 * str); /* String to i32 */
-public i16 _stoi16(i8 * str); /* String to i16 */
-public i8 _stoi8(i8 * str); /* String to i8 */
-public double _pow(double, int); /* Pow function */
-public void FINALIZE(); /* A function that free all TODO: */
-public i64 ticks_elapsed(); /* Ticks elapsed since code execution */
-public i64 tick_freq(); /* Calculate Tick frequency */
-public i64 seconds_elapsed(); /* Seconds elapsed */
-public i8 *fmttime(Time *); /* Format Time struct into a string */
-public Time *curr_time(); /* The current time returned as Time struct */
-public i8 *strchar(i8 * str, i8 ch); // Returns a ptr pointing to the first occurence of char in the string
-public s16 strcharidx(i8 *str, i8 ch); // Returns a idx to the first occurence of char in string
-public i8 *strstrs(i8 * haystack, i8 * needle); // Returns a ptr pointing to the first occurence of needle in the haystack
-public s16 strstrsidx(i8 * haystack, i8 * needle); // Returns index to the first occurence of needle in the haystack
-public void print_s_Tok_ret(struct s_Tok_ret *); // A function to pretty print a Token struct
-public struct s_Tok_ret *tokenise(i8 *, i8); // Tokenises and return a array of string
-public i8 *ascii2hex(i8); // Converts a byte to hex
-public i8 hex2ascii(i8 *); // Converts a hex string into a singular ascii byte
-public i16 c_freq(i8 * str, i8 ch); // Counts the frequency of char in a string
-public i8* find_chr(char * str,char ch); // Returns a pointer at the char
-public i8* find_chrr(char * str,char ch); // Returns a pointer at the char from reverse
-public i16 s_freq(i8 * str1, i8 * str2); // Returns frequency of string in a string
-public i8 _memcomp(i8 *src, i8 *dest, i16 len); // Copies len bytes from mem1 to mem2
-public i8 *touppr(i8 * str); // To uppercase 
-public i8 *tolwr(i8 * str); // To lowercase
-public i8 *toupprn(i8 * str, i16 len); // To uppercase first len chars
-public i8 *tolwrn(i8 *str, i16 len); // To lowercase first len chars
-public i8 isalphabetic(i8 *s); // Returns if alpahbetic
-public i8 isnumeric(i8 *s);  // Returns is numeric
-public i8 *invert_bits(i8 *s, i32 len); // Inverts the first len bits of s 
-public i8 flip_byte(i8); // Flips entire byte
+public
+void _fill(i8 *, i16, i8); /* Fills fixed no of bytes to input hex/char */
+public
+i16 _copy(i8 *, i8 *); /* Copy contents from second to first string */
+public
+i16 _copyn(i8 *, i8 *, i16, i8); /* Copy a 'N' chars from src to dest string*/
+public
+i8 *concat(i8 *str1, i8 *str2); /* Concats two strings */
+public
+i16 floor_div(i16 num, i16 denom); /* Floor division of the two arguments */
+public
+i16 ceil_div(i16 num, i16 denom); /* Ceil division of the two arguments */
+public
+void print_bytes(void *mem,
+                 i32 len); /* Prints len byes from the start of mem */
+public
+void print_hex(void *, i32); /* Prints len byes from the start of mem in
+                                formated manner similar to output of hexdump */
+public
+i8 _getbit(i8 *, i16); /* Used to get the nth bit from the memory location */
+public
+void _setbit(i8 *, i16); /* Used to set the nth bit from the memory location */
+public
+void _unsetbit(i8 *,
+               i16); /* Used to unset the nth bit from the memory location */
+public
+void _flipbit(i8 *,
+              i16); /* Used to flip the nth bit from the memory location */
+public
+i8 getbit(i8 *mem,
+          i16 n); /* Used to get the nth bit from the memory location */
+public
+void setbit(i8 *mem,
+            i16 n); /* Used to set the nth bit from the memory location */
+public
+void unsetbit(i8 *mem,
+              i16 n); /* Used to unset the nth bit from the memory location */
+public
+void flipbit(i8 *mem,
+             i16 n); /* Used to flip the nth bit from the memory location */
+public
+double precision(double num, i8 prec); /* Round num to prec decimal positions */
+public
+i32 ipaddr(i8 *); /* Coverts an IP string to its byte form */
+public
+i8 *ipstr(i32); /* Converts an IP in byte form into a IP string */
+public
+i16 net_port(i16); /* Htons for port */
+public
+i16 endian16(i16 x); /* Endian format for i16*/
+public
+i32 endian32(i32 x); /* Endian format for i16*/
+public
+i64 endian64(i64 x); /* Endian format for i16*/
+public
+Vector *Vector_init(void *, ...); /* Constructor for vector */
+public
+Tuple *Tuple_init(void *, ...); /* Constructor for tuple */
+public
+void v_append(struct s_vector *, void *); /* vector function family */
+public
+void t_add(Tuple *, void *); /* vector function family */
+public
+void v_print(struct s_vector *); /* vector function family */
+public
+void v_pop(struct s_vector *);              /* vector function family */
+Iterator *Iterator_init(struct s_vector *); /* Constructor for iterator types */
+void *next(Iterator *);                     /* Next functions for a iterator */
+public
+int _stoi(i8 *str); /* String to int */
+public
+i64 _stoi64(i8 *str); /* String to i64 */
+public
+i32 _stoi32(i8 *str); /* String to i32 */
+public
+i16 _stoi16(i8 *str); /* String to i16 */
+public
+i8 _stoi8(i8 *str); /* String to i8 */
+public
+double _pow(double, int); /* Pow function */
+public
+void FINALIZE(); /* A function that free all TODO: */
+public
+i64 ticks_elapsed(); /* Ticks elapsed since code execution */
+public
+i64 tick_freq(); /* Calculate Tick frequency */
+public
+i64 seconds_elapsed(); /* Seconds elapsed */
+public
+i8 *fmttime(Time *); /* Format Time struct into a string */
+public
+Time *curr_time(); /* The current time returned as Time struct */
+public
+i8 *strchar(i8 *str, i8 ch); // Returns a ptr pointing to the first occurence of
+                             // char in the string
+public
+s16 strcharidx(i8 *str,
+               i8 ch); // Returns a idx to the first occurence of char in string
+public
+i8 *strstrs(i8 *haystack, i8 *needle); // Returns a ptr pointing to the first
+                                       // occurence of needle in the haystack
+public
+s16 strstrsidx(i8 *haystack, i8 *needle); // Returns index to the first
+                                          // occurence of needle in the haystack
+public
+void print_s_Tok_ret(
+    struct s_Tok_ret *); // A function to pretty print a Token struct
+public
+struct s_Tok_ret *tokenise(i8 *, i8); // Tokenises and return a array of string
+public
+i8 *ascii2hex(i8); // Converts a byte to hex
+public
+i8 hex2ascii(i8 *); // Converts a hex string into a singular ascii byte
+public
+i16 c_freq(i8 *str, i8 ch); // Counts the frequency of char in a string
+public
+i8 *find_chr(char *str, char ch); // Returns a pointer at the char
+public
+i8 *find_chrr(char *str, char ch); // Returns a pointer at the char from reverse
+public
+i16 s_freq(i8 *str1, i8 *str2); // Returns frequency of string in a string
+public
+i8 _memcomp(i8 *src, i8 *dest, i16 len); // Copies len bytes from mem1 to mem2
+public
+i8 *touppr(i8 *str); // To uppercase
+public
+i8 *tolwr(i8 *str); // To lowercase
+public
+i8 *toupprn(i8 *str, i16 len); // To uppercase first len chars
+public
+i8 *tolwrn(i8 *str, i16 len); // To lowercase first len chars
+public
+i8 isalphabetic(i8 *s); // Returns if alpahbetic
+public
+i8 isnumeric(i8 *s); // Returns is numeric
+public
+i8 *invert_bits(i8 *s, i32 len); // Inverts the first len bits of s
+public
+i8 flip_byte(i8); // Flips entire byte
+
+public
+Type assert_type(char *str); // Asserts the type of the string provided(To be
+                             // used for parsing KV-args)
+public
+boolean is_alphabetic(
+    char *str); // Returns true if string provided consists of only alphabets
+public
+boolean is_numeric(char *str); // Returns true if string provided consists of
+                               // only numbers or singular dot
+public
+boolean
+is_alphanumeric(char *str); // Returns true if string provided is consists of
+                            // alphabets and numbers and some special sybmbols
+public
+void freeall(void *args, ...); // Free all to be used as helper for macro FREE()
+public
+void *clone(void *struct_, int sz); // Clones the object
+
 /* Function Signatures */

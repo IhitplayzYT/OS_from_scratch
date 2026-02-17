@@ -62,7 +62,7 @@ internal void print_inodes(Filesystem *fs) {
   }
   return;
 }
-
+//  yyyyyyyyyy
 internal Inode *fetchinode(Filesystem *fs, ptr idx) {
   FSblock bl;
   i16 n, size;
@@ -88,9 +88,12 @@ internal Inode *fetchinode(Filesystem *fs, ptr idx) {
       zero(ret, size);
       copy(ret, &bl.inodes[y], size);
       x = -1;
-      break;
+      if (!ret){
+      return ret; 
+      }
       }
     }
+
   }
 
   if (!ret)
@@ -345,8 +348,15 @@ internal Filesystem *fsmount(i8 drive) {
           : (drive == 2) ? 'D'
                          : '?');
   FileDescriptors[drive - 1] = fs;
+  
+//  Dir *dir = open_dir((i8 *)"c:/helog");
+ptr idx = mkdirectory((i8 *)"c:/helog");
+printf("idx = %d\n",idx);
+
+
   return fs;
 }
+
 
 internal void fsunmount(Filesystem *fs) {
   if (!fs) {
@@ -1075,9 +1085,29 @@ internal Inode *get_inode(i8 *path, Filesystem *fs) {
   return ino;
 }
 
+internal ptr path2inode(Path * p ){
+  ptr iptr = 1, tmp;
+  i16 size, n;
+  Filename name;
+  if (*p->inter->ret[0])
+      for (n=0; *p->inter->ret[n]; n++) {
+          zero(&name, sizeof(Filename));
+          size = len(p->inter->ret[n]);
+          if (!size)
+              break;
+          memcopy(&name.name,&p->inter->ret[n], size);
+          tmp = read_dir(p->fs, iptr, &name);
+          if (!tmp)
+              reterr(PATH_ERR);
+          iptr = tmp;
+  }
+
+  tmp = read_dir(p->fs, iptr, p->target);
+  if (!tmp) reterr(PATH_ERR)
+  else return tmp;
+}
+
 internal ptr mkdirectory(i8 * s){
-Path * path = init_path(s, NULL);
-if (!path) {reterr(PATH_ERR);}
 char buff[255] = {0},target[256] = {0};
 strncopy((i8 *)&buff, s,255);
 i8 * p = find_chrr(buff, '/');
@@ -1087,15 +1117,58 @@ strncopy((i8 *)&target,p,255);
 p = (i8 *)buff;
 Path * path2 = init_path(p, NULL)  ;
 if (!path2) reterr(PATH_ERR); 
+ptr in = path2inode(path2);
+if (!in) reterr(PATH_ERR)
+Filename name;
+zero(&name,sizeof(Filename));
+memcopy(&name.name,&target, 8);
+ptr idx = create_inode(path2->fs, &name, DirType);
+if (!idx) reterr(INODE_ERR);
+Inode * inode = fetchinode(path2->fs,idx);
+if (!inode) {inode_dealloc(path2->fs,in);reterr(INODE_ERR);}
+int i;
+for (i = 0 ;i < DirectPtrsperInode;i++){
+  if (!inode->direct[i]) break;
+}
 
-return 0;
+if (!inode->direct[i]){
+inode->direct[i] = idx;
+if (!save_inode(path2->fs, inode,idx)){
+inode_dealloc(path2->fs, idx);
+dealloc(inode);
+reterr(INODE_ERR);
+}
+dealloc(inode);
+return idx;
+}
+ptr block;
+if (!inode->indirect){
+block = allocbitmap(path2->fs, path2->fs->bitmap);
+inode->indirect = block;
+if (!save_inode(path2->fs, inode,idx)){
+  inode_dealloc(path2->fs, idx);
+  dealloc(inode);
+  freebitmap(path2->fs, path2->fs->bitmap, block);
+  reterr(INODE_ERR);
+  }
+}
+  FSblock bl;
+zero(&bl.data,BLOCK_SIZE);
+bl.ptrs[0] = idx;
+if (!dwrite(path2->fs->dd,&bl.data,block)){
+inode->indirect = 0;
+inode_dealloc(path2->fs, idx);
+dealloc(inode);
+freebitmap(path2->fs, path2->fs->bitmap, block);
+reterr(INODE_ERR);
+}
+dealloc(inode);
+return idx;
+
 }
 
 // TODO:
-internal ptr path2inode(Path *p) {
 
-return 0;
-}
 
 // TODO: Implement these two
 internal i16 openfiles(Disk *dd) { return 0; }

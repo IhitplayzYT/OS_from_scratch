@@ -677,3 +677,60 @@ for (int i = len(s) - 1;i >= 0 ; i--){
 }
 return 0;
 }
+
+
+public void freeall(void * a,...){
+va_list args;
+va_start(args,a);
+void * ptr = a;
+while (ptr) {
+free(ptr);
+ptr = va_arg(args, void *);
+}
+va_end(args);
+}
+
+
+public boolean is_alphanumeric(char * str) {
+for (int i =0 ; str[i] ; i ++) {
+if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= '0' && str[i] <= '9') || str[i] == '.' || str[i] == '_' || str[i] == '-' || str[i] == ';' || str[i] == ':' || str[i] == '/' || str[i] == '\\' || str[i] == '\'' || str[i] == '\"' || str[i] == '(' || str[i] == ')' || str[i] == '[' || str[i] == ']' || str[i] == '<' || str[i] == '>') continue;
+else return false;
+}
+return true;
+}
+
+public boolean is_numeric(char * str) {
+int cdot = 2;
+for (int i =0 ; str[i] ; i ++) {
+if (str[i] == '.') cdot--;
+if (((str[i] >= '0' && str[i] <= '9') || str[i] == '.') && cdot) continue;
+else return false;
+}
+return true;
+}
+
+public boolean is_alphabetic(char * str) {
+for (int i =0 ; str[i] ; i ++) {
+if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z')) continue;
+else return false;
+}
+return true;
+}
+
+
+public Type assert_type(char * str) {
+if (len(str) == 1 || str[0] == '\'') return t_char;
+if (is_numeric(str)){
+    if (!freq(str, '.')) return t_int;
+    else return t_float;
+}   
+if (strcomp(str, "true") == 0 || strcomp(str, "True") == 0 || strcomp(str, "false") == 0 || strcomp(str, "False") == 0) return t_bool;
+return t_charptr;
+}
+
+public void* clone(void * struct_,int sz){
+void * p = malloc(sz);
+memcopy(p, struct_, sz);
+return p;
+}
+

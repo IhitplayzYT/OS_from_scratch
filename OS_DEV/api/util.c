@@ -71,15 +71,7 @@ void cmd_format(i8 *s1, i8 *s2) {
 
 //   NO ERRORS BEFORE THIS POINTS
 
-  // Fix this
-  Dir *dir = open_dir((i8 *)"c:/helog");
-  if (!dir) {
-    print_err();
-    return;
-  }
-  print_hex(dir, sizeof(Dir)); 
 
-return ; 
   //  Fix this shows way too many inodes and many were empty
    show(fetchinode(fs,1),(i8 *)"inode");
    Ls * ls = listfiles(fs,fetchinode(fs,0));

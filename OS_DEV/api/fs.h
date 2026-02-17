@@ -199,7 +199,8 @@ internal Filename *toggle_fname_case(Filename *, i8); // Change the case of the 
 internal Path *init_path(i8 *, Filesystem *); // Creates a path struct from a string
 internal i8 *eval_path(i8 *); // Shortens a path into the simplest path
 internal i8 validchar(i8);  // Checks whether a char is part of the valid langauge to be used in a filename
-internal i8 set_perms(char *,char *);
+internal i8 set_perms(char *,char *); // TODO:
+internal ptr path2inode(Path * p ); // Returns the ptr pointing to the Path target
 /*   PATHS & FILENAME   */
 
 
