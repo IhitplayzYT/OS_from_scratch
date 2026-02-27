@@ -487,6 +487,51 @@ DEF_PRINT_ARGS(f64, print_f64, "%lf ");
       f64: print_f64,                                                          \
       char: print_chars)(x, __VA_ARGS__, NULL)
 
+typedef struct s_Metadata {
+  u64 len, cap;
+} Metadata;
+
+typedef struct s_Vector {
+  Metadata meta;
+  void *arr;
+} Vec;
+
+//   [header][array]
+#define mkvec(arr, cap)                                                        \
+  do {                                                                         \
+    Metadata *meta = malloc(sizeof(Metadata) + sizeof(*(arr)) * (cap));        \
+    if (!meta)                                                                 \
+      exit(10);                                                                \
+    meta->cap = (cap);                                                         \
+    meta->len = 0;                                                             \
+    arr = (void *)(meta + 1);                                                  \
+  } while (0)
+
+#define v_push(arr, data)                                                           \
+  do {                                                                              \
+    if (!arr) exit(10);                                                             \
+    if (((Metadata *)(arr) - 1)->len == ((Metadata *)(arr) - 1)->cap) {             \
+      Metadata* meta = (Metadata*)(arr) - 1;                                        \
+      u64 cap = meta->cap;                                                          \
+      Metadata * n_meta = realloc(meta,sizeof(Metadata) + sizeof(*(arr)) * cap * 2);\
+      meta = n_meta;                                                                \
+      if (!meta) exit(10);                                                          \
+      (arr) = (Metadata*)meta+1;                                                    \
+      meta->cap = cap * 2 ;                                                         \
+    }                                                                               \
+    (arr)[(((Metadata *)(arr) - 1)->len)++] = (data);                               \
+  } while (0)
+
+#define v_pop(arr)                                                             \
+  do {                                                                         \
+    if (((Metadata *)arr - 1)->len == 0)                                       \
+      break;                                                                   \
+    ((Metadata *)arr - 1)->len--;                                              \
+  } while (0)
+
+#define v_len(arr) ((Metadata*)(arr) - 1)->len
+#define v_cap(arr) ((Metadata*)(arr) - 1)->cap
+
 static signed short _strcomp(i8 *a, i8 *b) {
   if (!a || !*a)
     return -1;
@@ -796,7 +841,7 @@ void t_add(Tuple *, void *); /* vector function family */
 public
 void v_print(struct s_vector *); /* vector function family */
 public
-void v_pop(struct s_vector *);              /* vector function family */
+void V_pop(struct s_vector *);              /* vector function family */
 Iterator *Iterator_init(struct s_vector *); /* Constructor for iterator types */
 void *next(Iterator *);                     /* Next functions for a iterator */
 public

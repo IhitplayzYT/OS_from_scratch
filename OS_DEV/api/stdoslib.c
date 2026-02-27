@@ -198,7 +198,7 @@ v->l = 0;
 v->cap = 2;
 v->type = sz * 8;
 v->append = v_append;
-v->pop = v_pop;
+v->pop = V_pop;
 v->iterator = Iterator_init;
 v->data = (void **)alloc(sizeof(void *) * v->cap);
 if (!v->data) {dealloc(v);return (Vector*)0;}
@@ -217,7 +217,7 @@ v->data[v->l++] = data;
 }
 }
 
-public void v_pop(struct s_vector * v){
+public void V_pop(struct s_vector * v){
 v->l = (v->l)?--v->l:v->l;
 v->data[v->l]= NULL;
 }
