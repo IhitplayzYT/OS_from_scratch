@@ -23,7 +23,6 @@ typedef float f32;
 typedef double f64;
 typedef unsigned char byte;
 typedef unsigned char boolean;
-typedef char String;
 /* Typedefinations */
 /* MACROS */
 #define true 1
@@ -487,50 +486,95 @@ DEF_PRINT_ARGS(f64, print_f64, "%lf ");
       f64: print_f64,                                                          \
       char: print_chars)(x, __VA_ARGS__, NULL)
 
-typedef struct s_Metadata {
+typedef struct sv_Metadata {
   u64 len, cap;
-} Metadata;
+} v_Metadata;
 
 typedef struct s_Vector {
-  Metadata meta;
+  v_Metadata* meta;
   void *arr;
 } Vec;
 
 //   [header][array]
 #define mkvec(arr, cap)                                                        \
   do {                                                                         \
-    Metadata *meta = malloc(sizeof(Metadata) + sizeof(*(arr)) * (cap));        \
+    v_Metadata *meta = malloc(sizeof(Metadata) + sizeof(*(arr)) * (cap));        \
     if (!meta)                                                                 \
       exit(10);                                                                \
     meta->cap = (cap);                                                         \
-    meta->len = 0;                                                             \
+    meta->len = 0;                                                \
     arr = (void *)(meta + 1);                                                  \
   } while (0)
 
 #define v_push(arr, data)                                                           \
   do {                                                                              \
     if (!arr) exit(10);                                                             \
-    if (((Metadata *)(arr) - 1)->len == ((Metadata *)(arr) - 1)->cap) {             \
-      Metadata* meta = (Metadata*)(arr) - 1;                                        \
+    if (((v_Metadata *)(arr) - 1)->len == ((Metadata *)(arr) - 1)->cap) {             \
+      v_Metadata* meta = (Metadata*)(arr) - 1;                                        \
       u64 cap = meta->cap;                                                          \
-      Metadata * n_meta = realloc(meta,sizeof(Metadata) + sizeof(*(arr)) * cap * 2);\
+      v_Metadata * n_meta = realloc(meta,sizeof(Metadata) + sizeof(*(arr)) * cap * 2);\
       meta = n_meta;                                                                \
       if (!meta) exit(10);                                                          \
-      (arr) = (Metadata*)meta+1;                                                    \
+      (arr) = (v_Metadata*)meta+1;                                                    \
       meta->cap = cap * 2 ;                                                         \
     }                                                                               \
-    (arr)[(((Metadata *)(arr) - 1)->len)++] = (data);                               \
+    (arr)[(((v_Metadata *)(arr) - 1)->len)++] = (data);                               \
   } while (0)
 
 #define v_pop(arr)                                                             \
   do {                                                                         \
-    if (((Metadata *)arr - 1)->len == 0)                                       \
-      break;                                                                   \
-    ((Metadata *)arr - 1)->len--;                                              \
+    if (((v_Metadata *)arr - 1)->len == 0)                                       \
+      exit(10);                                                                   \
+    ((v_Metadata *)arr - 1)->len--;                                              \
   } while (0)
 
-#define v_len(arr) ((Metadata*)(arr) - 1)->len
-#define v_cap(arr) ((Metadata*)(arr) - 1)->cap
+
+#define v_len(arr) ((v_Metadata*)(arr) - 1)->len
+#define v_cap(arr) ((v_Metadata*)(arr) - 1)->cap
+#define v_free(arr) do {\
+if (arr) {free((v_Metadata*)(arr)-1);\
+(arr) = NULL;}     \
+} while (0)
+
+
+typedef struct ss_Metadata{
+u64 len,cap;
+} s_Metadata;
+
+typedef struct s_String{
+s_Metadata * meta;
+void * string;
+} String;
+
+#define mkstr(arr,cap) do {\
+s_Metadata * meta = malloc(sizeof(s_Metadata) + sizeof(*(arr)) * (cap));\
+if (!meta) exit(10);\
+meta->len = 0;\
+meta->cap = (cap);\
+(arr) = (void *)(meta + 1);\
+} while (0)
+
+#define s_push(arr,str) do { \
+if (!arr) exit(10);\
+s_Metadata * meta = (s_Metadata*)(arr) - 1;\
+if (meta->len + len(str) > meat->len){\
+u64 new_len,old_len = len(str) + meta->len,meta->len;\
+meta = realloc(meta,sizeof(s_Metadata) + sizeof(*(arr))* (new_len+10));\
+if (!meta) exit(10);\
+meta->len = new_len;\
+meta->cap = new_len+10;\
+}\
+arr = (void *)((s_Metadata*)meta + 1);\
+strncopy(arr+old_len,str,len(str));\
+} while (0)
+
+#define s_pop(arr) do{\
+if (!arr) exit(10);\
+if (((s_Metadata *)arr - 1)->len == 0)                                       \
+      exit(10);                                                                \
+((s_Metadata*)arr - 1)->len --;\
+}while (0)
+
 
 static signed short _strcomp(i8 *a, i8 *b) {
   if (!a || !*a)
