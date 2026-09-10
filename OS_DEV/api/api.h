@@ -28,7 +28,6 @@ typedef unsigned long i64;
 /* Definations */
 #define IP "127.0.0.1"
 #define PORT 80
-#define ERR_STR "[%s:%d] Error %d : %s\n"
 #define MAX_FD 256
 /* Definations */
 

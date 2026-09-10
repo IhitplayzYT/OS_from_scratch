@@ -371,7 +371,7 @@ internal void fsunmount(Filesystem *fs) {
   dealloc(fs);
 }
 
-internal i8 validfname(Filename *name, Type t) {
+internal i8 validfname(Filename *name, FsType t) {
   if (!name || !t || (t == DirType && *name->ext)) {
     seterr(BAD_ARG);
     return 0;
@@ -398,7 +398,7 @@ internal i8 validfname(Filename *name, Type t) {
 // Err in ctreate_inode and alloc_inode ?
 
 //   yyyyyy
-internal ptr create_inode(Filesystem *fs, Filename *name, Type t) {
+internal ptr create_inode(Filesystem *fs, Filename *name, FsType t) {
   if (!fs) {
     seterr(BAD_ARG);
     return 0;

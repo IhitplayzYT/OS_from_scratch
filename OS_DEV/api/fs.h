@@ -44,7 +44,7 @@ enum e_type {
   FileType = 0x01,
   DirType = 0x03
 } packed;
-typedef enum e_type Type;
+typedef enum e_type FsType;
 
 typedef i8 Bitmap;
 
@@ -116,7 +116,7 @@ struct s_file_entry {
   ptr idx;
   Filename name;
   i16 size;
-  Type filetype;
+  FsType filetype;
 } packed;
 typedef struct s_file_entry File_entry;
 
@@ -174,7 +174,7 @@ internal void show_ls(Ls *); // TODO: A pritn fxn to display a LS struct
 
 /*  INODE FXNS  */
 internal Inode *fetchinode(Filesystem *, ptr); // Retrieve the ith inode
-internal ptr create_inode(Filesystem *, Filename *, Type); //  Creates an inode
+internal ptr create_inode(Filesystem *, Filename *, FsType); //  Creates an inode
 internal ptr inode_alloc(Filesystem *);       // Helper fxn to create_inode
 internal i8 inode_dealloc(Filesystem *, ptr); // Helper fxn to destroy_inode
 internal ptr save_inode(Filesystem *, Inode *,ptr); // Write thew inode to disk, hekper to create_inode
@@ -192,7 +192,7 @@ internal File_stat *fsstat(Filesystem *, ptr); // File_stat struct of a file
 
 /*   PATHS & FILENAME   */
 internal i8 *filestr(Filename *); // Convert s_Filename to filename string
-internal i8 validfname(Filename *,Type); // Checks validity of Filename struct of Type type
+internal i8 validfname(Filename *,FsType); // Checks validity of Filename struct of FsType type
 internal Filename *parse_name(i8 *); // Parses the filename string to a s_Filename struct
 internal i8 *filetostr(Filename *);  // Converts a filename struct to a string literal
 internal Filename *toggle_fname_case(Filename *, i8); // Change the case of the filename
