@@ -1,5 +1,6 @@
 /* api.c */
 
+#include "os.h"
 #define ERR_GLOBAL
 #include "api.h"
 
@@ -22,7 +23,7 @@ private i8 isopen(i8 fd)
    if (!INIT_FLAG) reterr(NO_INIT_ERR);
     if (fd < 3) return 0;
     i8 psxfd = getposixfd(fd);
-    if (!psxfd)return 0;
+    if (!psxfd || psxfd < 0 || psxfd > MAX_FD-1) reterr(BAD_FD);
     if  (fstat(psxfd,&_) == -1) return 0;
     return 1;
 }
@@ -35,7 +36,9 @@ public i8 write_byte(i8 fd, i8 chr)
     i8 buff[2] = {0};
     buff[0] = chr;
     i8 psxfd = getposixfd(fd);
+    
     if (!psxfd) reterr(CLOSED_FD);
+    if (psxfd < 0 || psxfd > MAX_FD-1) {reterr(BAD_FD);}
     psxfd = (psxfd == 1) ? 0 : (psxfd == 2) ? 1: (psxfd);
 if (!write(psxfd,buff,1)) reterr(IO_ERR);
 return 0;
@@ -50,6 +53,7 @@ if (fd > 2 && !isopen(fd)) reterr(CLOSED_FD);
 char buff[2] = {0};
     i8 psxfd = getposixfd(fd);
     if (!psxfd) reterr(CLOSED_FD);
+    if (psxfd < 0 || psxfd > MAX_FD-1) reterr(BAD_FD);
     psxfd = (psxfd == 1) ? 0 : (psxfd == 2) ? 1: (psxfd);
 if (!read(psxfd,buff,1)) reterr(IO_ERR);
 return (i8)*buff;
@@ -63,6 +67,10 @@ for (int i = 2;i < MAX_FD ;i ++)fds[i] = 0;
 }
 
 public void print_err(){
+if (err_number<0 || err_number >= 0){
+    printf("Invalid error nuumber %d\n",err_number);
+    return;
+}
 printf(ERR_STR,__FILE__,__LINE__,err_number,err[err_number]);
 }
 

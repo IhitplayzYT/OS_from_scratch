@@ -751,27 +751,30 @@ internal Path *init_path(i8 *path, Filesystem *fs) {
     return (Path *)0;
   }
   struct s_Tok_ret *ret = tokenise(path, '/');
-  if (!ret) {
-    return (Path *)0;
+  if (!ret) return (Path *)0;
+
+  i8 drive = DiskDescriptor[0]?DiskDescriptor[0]->drive_no:0;
+  if (fs) ans->fs = fs;
+  else ans->fs = fsmount(2);
+  if (ret->n == 0) {
+    seterr(BAD_ARG);
+    dealloc(ans);
+    return (Path*)0;
   }
-  i8 drive = DiskDescriptor[0]->drive_no;
-  if (fs)
-    ans->fs = fs;
-  else
-    ans->fs = fsmount(2);
+
   ans->target = parse_name(ret->ret[ret->n - 1]);
   if (!ans->target) {
     seterr(BAD_FILE_NAME);
     return (Path *)0;
   }
-  ret->ret[--ret->n] = NULL;
+  if (ret->n > 0) ret->ret[--ret->n] = NULL;
+
   ans->inter = ret;
   return ans;
 }
 
 internal void show_path(Path *p) {
-  if (!p || !p->target)
-    return;
+  if (!p || !p->target) return;
 
   if (!*p->target->ext)
     printf("----Path----\nDisk: %s\nTarget Dir: %s\n",
@@ -785,6 +788,7 @@ internal void show_path(Path *p) {
            : (p->fs->drive == 2) ? "D"
                                  : "None",
            p->target->name, p->target->ext);
+  if (!p->inter) return;
   printf("Dirs: [");
   for (int i = 0; i < p->inter->n; i++) {
     printf("%s", p->inter->ret[i]);
@@ -912,7 +916,7 @@ internal Ls *listfiles(Filesystem *fs, Inode *dir) {
     memcopy(&arr[c - 1].name, &inode->name, sizeof(Filename));
     arr[c - 1].size = inode->size;
     arr[c - 1].filetype = inode->validtype;
-    free(inode);
+    dealloc(inode);
   }
 
   if (dir->indirect) {
@@ -939,9 +943,10 @@ internal Ls *listfiles(Filesystem *fs, Inode *dir) {
   }
   Ls *ret = (Ls *)alloc(sizeof(Ls));
   for (int i = 0; i < c; i++)
-    ret->arr[i] = (File_entry *)alloc(sizeof(File_entry *));
+    ret->arr[i] = (File_entry *)alloc(sizeof(File_entry));
   ret->count = c;
-  copy(ret->arr, arr, sizeof(File_entry) * (c - 1));
+  for (int i = 0;i <c;i++)
+  memcopy(ret->arr[i], &arr[i], sizeof(File_entry));
   return ret;
 }
 
@@ -972,8 +977,10 @@ internal i8 *filetostr(Filename *fn) {
     return str;
   else {
     i16 l = len(str);
-    str[l - 1] = '.';
-    memcopy(str + l, fn->ext, 3);
+    if (l > 0){
+      str[l - 1] = '.';
+      memcopy(str + l, fn->ext, 3);
+    }
   }
   return str;
 }
@@ -1004,8 +1011,11 @@ internal ptr get_ptr(i8 *s, Filesystem *fs) {
     seterr(BAD_ARG);
     return 0;
   }
-  if (!fs)
+  if (!fs){
     fs = FileDescriptors[0];
+    if (!fs) {reterr(BAD_ARG);}
+  }
+
   Inode *ino = fetchinode(fs, 0);
   for (i16 i = 0; i < DirectPtrsperInode; i++) {
     Inode *t = fetchinode(fs, ino->direct[i]);
@@ -1019,6 +1029,8 @@ internal ptr get_ptr(i8 *s, Filesystem *fs) {
     ptr x = search_subdir(fs, t, s);
     dealloc(t);
   }
+
+  if (ino->indirect){
   Inode *t = fetchinode(fs, ino->indirect);
   if (!t) {
     seterr(INODE_ERR);
@@ -1034,6 +1046,8 @@ internal ptr get_ptr(i8 *s, Filesystem *fs) {
   dealloc(t);
   dealloc(ino);
   return x;
+  }
+  return 0;
 }
 
 internal ptr search_subdir(Filesystem *fs, Inode *inode, i8 *s) {
@@ -1058,6 +1072,7 @@ internal ptr search_subdir(Filesystem *fs, Inode *inode, i8 *s) {
     return search_subdir(fs, t, s);
     dealloc(t);
   }
+  if (!inode || !inode->indirect) reterr(BAD_ARG);
   Inode *t = fetchinode(fs, inode->indirect);
   if (!t) {
     return 0;
@@ -1072,9 +1087,13 @@ internal ptr search_subdir(Filesystem *fs, Inode *inode, i8 *s) {
 }
 
 internal Inode *get_inode(i8 *path, Filesystem *fs) {
-  if (!path || !*path)
-    return (Inode *)0;
+  if (!path || !*path) return (Inode *)0;
+  if (!fs){
+    fs = FileDescriptors[0];
+    if (!fs) {seterr(BAD_ARG);return (Inode*)0;}
+  }
   Inode *ino;
+
   Path *p = init_path(path, (!fs) ? FileDescriptors[0] : fs);
   if (!path)
     return (Inode *)0;
@@ -1086,16 +1105,18 @@ internal Inode *get_inode(i8 *path, Filesystem *fs) {
 }
 
 internal ptr path2inode(Path * p ){
+  if (!p) {seterr(BAD_ARG);return (ptr)0;}
   ptr iptr = 1, tmp;
   i16 size, n;
   Filename name;
+  if (!p->inter || p->inter->n == 0) reterr(BAD_ARG)
   if (*p->inter->ret[0])
       for (n=0; *p->inter->ret[n]; n++) {
           zero(&name, sizeof(Filename));
           size = len(p->inter->ret[n]);
           if (!size)
               break;
-          memcopy(&name.name,&p->inter->ret[n], size);
+          memcopy(&name.name,p->inter->ret[n], size);
           tmp = read_dir(p->fs, iptr, &name);
           if (!tmp)
               reterr(PATH_ERR);
@@ -1115,7 +1136,7 @@ if (!p) reterr(PATH_ERR);
 *p++ = 0;
 strncopy((i8 *)&target,p,255);
 p = (i8 *)buff;
-Path * path2 = init_path(p, NULL)  ;
+Path * path2 = init_path(p, NULL);
 if (!path2) reterr(PATH_ERR); 
 ptr in = path2inode(path2);
 if (!in) reterr(PATH_ERR)

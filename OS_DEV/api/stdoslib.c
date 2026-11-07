@@ -82,6 +82,7 @@ public void _flipbit(i8 *a,i16 n){
 public i8* concat(i8*a,i8*b){
 static i8 buff[512];
 strcopy(buff,a);
+if (len(a)+len(b) >= 512) return 0;
 strcopy(&buff[len(a)],b);
 buff[len(buff)] = '\0';
 return buff;
@@ -253,6 +254,7 @@ return ret;
 
 
 public i8 _stoi8(i8*s){
+if (!s) return 0;
 i8 l = len(s);
 i8 ret = 0;
 for (i8 i = 0 ;i < l;i++){
@@ -264,6 +266,7 @@ return ret;
 }
 
 public i16 _stoi16(i8*s){
+if (!s) return 0;
 i8 l = len(s);
 i16 ret = 0;
 for (i8 i = 0 ;i < l;i++){
@@ -275,6 +278,7 @@ return ret;
 }
 
 public i32 _stoi32(i8*s){
+if (!s) return 0;
 i8 l = len(s);
 i32 ret = 0;
 for (i8 i = 0 ;i < l;i++){
@@ -286,6 +290,7 @@ return ret;
 }
 
 public i64 _stoi64(i8*s){
+if (!s) return 0;
 i8 l = len(s);
 i64 ret = 0;
 for (i8 i = 0 ;i < l;i++){
@@ -296,8 +301,8 @@ else return 0;
 return ret;
 }
 
-
 public int _stoi(i8*s){
+if (!s) return 0;
 i8 l = len(s);
 i8 flag = 0;
 int ret = 0;
@@ -361,7 +366,7 @@ return ticks_elapsed() / tick_freq();
 public Time * curr_time(){
 i64 t = seconds_elapsed();
 Time * ts = (Time *)alloc(sizeof(Time));
-if (!t) return (Time *)0;
+if (!ts) return (Time *)0;
 ts->minutes = (i16)(t / 60);
 ts->hours = (i16)(t / 3600);
 ts->seconds = t % 60;
@@ -666,7 +671,7 @@ return ret;
 
 
 public i8* find_chr(char *s,char c){
-for (i8* p = (i8 *)s; p ;p++){
+for (i8* p = (i8 *)s; *p ;p++){
     if (*p == c){return p;}
 }
 return 0;

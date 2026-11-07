@@ -10,15 +10,20 @@ public void dinit() {
   i8 n;
 
   attached = 0;
- for (n=1; n<=MAX_DD; n++)
-      *(DiskDescriptor+(n-1)) = attach(n);
-  
-  if (*DiskDescriptor)
+
+  for (n=1; n<=MAX_DD; n++){
+      Disk * disk = attach(n);
+      if (disk) *(DiskDescriptor+(n-1)) = disk;
+  }
+
+  if (DiskDescriptor[0] && DiskDescriptor[0]->drive_no)
       fsmount(1);
 
- for (n=1; n<=MAX_DD; n++)
+ for (n=1; n<=MAX_DD; n++){
+    if (DiskDescriptor[(n-1)]){
       detach(DiskDescriptor[(n-1)]);
-
+    }
+ }
   return;
 }
 
@@ -88,7 +93,8 @@ internal void detach(Disk *dd) {
   if (!dd)
     return;
   attached = ~(dd->drive_no) & attached;
-  close(dd->fd);
+  if (dd->fd >= 0)
+    close(dd->fd);
   dealloc(dd);
   dd = NULL;
 }
